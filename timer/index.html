@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mameyose Timer</title>
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --panel-bg: #161b22;
+      --text-color: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent-color: #EDE1F8;
+      --primary-color: #8957e5;
+      --warning-color: #d29922;
+      --danger-color: #f85149;
+      --bar-bg: #21262d;
+      --active-bg: rgba(137, 87, 229, 0.15);
+      --active-border: #8957e5;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* 全体レイアウト：上から header, main-content, progress-container */
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* 左側サイドバー：アジェンダ */
+    .sidebar {
+      width: 35%;
+      min-width: 300px;
+      max-width: 500px;
+      background-color: var(--panel-bg);
+      border-right: 1px solid var(--bar-bg);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    .sidebar-title {
+      font-size: 1.5rem;
+      margin-top: 0;
+      margin-bottom: 2rem;
+      color: var(--accent-color);
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .agenda-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .agenda-item {
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid transparent;
+      background-color: transparent;
+      transition: all 0.3s ease;
+      color: var(--text-muted);
+    }
+
+    /* アクティブなアジェンダのスタイル */
+    .agenda-item.active {
+      background-color: var(--active-bg);
+      border-left: 4px solid var(--active-border);
+      color: var(--text-color);
+    }
+    
+    .agenda-item.active .agenda-title {
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .agenda-time {
+      font-family: tabular-nums;
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .agenda-title {
+      font-size: 1.5rem;
+    }
+
+    /* 右側メイン部：タイマー表示 */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* 上部ヘッダー部：現在時刻 */
+    .header {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 1.5rem 2.5rem;
+      font-size: 2.5rem;
+      font-weight: 300;
+      color: var(--text-color);
+      opacity: 0.7;
+    }
+
+    /* タイマー中央表示 */
+    .timer-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .time-display {
+      font-size: 20vw;
+      font-weight: bold;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      margin: 0;
+      text-shadow: 0 0 20px rgba(137, 87, 229, 0.3);
+      transition: color 0.5s ease;
+    }
+
+    .time-display.warning {
+      color: var(--warning-color);
+      text-shadow: 0 0 20px rgba(210, 153, 34, 0.3);
+    }
+
+    .time-display.danger {
+      color: var(--danger-color);
+      text-shadow: 0 0 20px rgba(248, 81, 73, 0.3);
+    }
+    
+    .sub-info {
+      font-size: 2.5rem;
+      opacity: 0.5;
+      margin-top: -1rem;
+      margin-bottom: 3rem;
+    }
+
+    /* コントロールボタン群 */
+    .controls {
+      display: flex;
+      gap: 1.5rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .main-area:hover .controls {  opacity: 1; }
+
+    button {
+      background-color: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--text-color);
+      padding: 1rem 2.5rem;
+      border-radius: 6px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--text-color);
+      color: var(--bg-color);
+    }
+    
+    button:active { transform: scale(0.95); }
+
+    /* 進行度プログレスバー */
+    .progress-container {
+      height: 1.5rem;
+      background-color: var(--bar-bg);
+      width: 100%;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background-color: var(--primary-color);
+      width: 0%;
+      transition: width 1s linear, background-color 0.5s ease;
+    }
+    
+    .progress-bar.warning { background-color: var(--warning-color); }
+    .progress-bar.danger { background-color: var(--danger-color); }
+
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- 左側アジェンダ -->
+    <div class="sidebar">
+      <h2 class="sidebar-title">Agenda & Schedule</h2>
+      <ul class="agenda-list" id="agendaList">
+        <!-- JSで動的に生成 -->
+      </ul>
+    </div>
+
+    <!-- 右側タイマー領域 -->
+    <div class="main-area">
+      <div class="header">
+        <div id="clock">00:00</div>
+      </div>
+
+      <div class="timer-content">
+        <div id="timeLeft" class="time-display">90:00</div>
+        <div class="sub-info">経過: <span id="timeElapsed">00:00</span></div>
+        
+        <div class="controls">
+          <button id="btnToggle">Start</button>
+          <button id="btnNext">Next >></button>
+          <button id="btnReset">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-container">
+    <div id="progressBar" class="progress-bar"></div>
+  </div>
+
+  <script>
+    // 定数・設定
+    // TODO: TOTAL_MINUTES を発表時間に合わせて変更してください
+    const TOTAL_MINUTES = 30; // 全体時間（分）
+    const WARNING_MINUTES = 5; // 残り時間警告（分）
+    const DANGER_MINUTES = 0;  // 終了
+
+    // スケジュール定義 (startMin: 開始分数, endMin: 終了分数, title: アジェンダ名)
+    // TODO: 発表のアジェンダに合わせて編集してください
+    const AGENDA = [
+      { startMin:  0, endMin:  5, title: "オープニング・自己紹介" },
+      { startMin:  5, endMin: 15, title: "第1部：タイトルを入力" },
+      { startMin: 15, endMin: 25, title: "第2部：タイトルを入力" },
+      { startMin: 25, endMin: 30, title: "まとめ・質疑応答 (Q&A)" }
+    ];
+
+    // 状態管理
+    let totalSeconds = TOTAL_MINUTES * 60;
+    let elapsedSeconds = 0;
+    let isRunning = false;
+    let timerInterval = null;
+    let currentAgendaIndex = 0; // 現在ハイライトされているアジェンダのインデックス
+
+    // DOM要素
+    const clockEl = document.getElementById('clock');
+    const timeLeftEl = document.getElementById('timeLeft');
+    const timeElapsedEl = document.getElementById('timeElapsed');
+    const progressBarEl = document.getElementById('progressBar');
+    const agendaListEl = document.getElementById('agendaList');
+    const btnToggle = document.getElementById('btnToggle');
+    const btnNext = document.getElementById('btnNext');
+    const btnReset = document.getElementById('btnReset');
+
+    // フォーマット関数: (m)m:ss
+    function formatTime(seconds) {
+      const isNegative = seconds < 0;
+      const absSeconds = Math.abs(seconds);
+      const m = Math.floor(absSeconds / 60);
+      const s = absSeconds % 60;
+      const sign = isNegative ? "-" : "";
+      return `${sign}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // アジェンダの初期描画
+    function initAgenda() {
+      agendaListEl.innerHTML = '';
+      AGENDA.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.className = 'agenda-item';
+        li.id = `agenda-${index}`;
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'agenda-time';
+        timeDiv.textContent = `${String(item.startMin).padStart(2,'0')}:00 〜 ${String(item.endMin).padStart(2,'0')}:00`;
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'agenda-title';
+        titleDiv.textContent = item.title;
+        
+        li.appendChild(timeDiv);
+        li.appendChild(titleDiv);
+        agendaListEl.appendChild(li);
+      });
+    }
+
+    // アジェンダのハイライト更新
+    function updateAgendaHighlight(elapsedMins) {
+      // 現在の経過時間から本来のインデックスを計算
+      let autoIndex = 0;
+      for (let i = 0; i < AGENDA.length; i++) {
+        if (elapsedMins >= AGENDA[i].startMin && (i === AGENDA.length - 1 || elapsedMins < AGENDA[i].endMin)) {
+          autoIndex = i;
+          break;
+        }
+      }
+
+      // 時間経過が手動進行(currentAgendaIndex)を追い越した場合は自動で進める
+      if (autoIndex > currentAgendaIndex) {
+        currentAgendaIndex = autoIndex;
+      }
+
+      // UIの更新
+      AGENDA.forEach((item, index) => {
+        const el = document.getElementById(`agenda-${index}`);
+        if (index === currentAgendaIndex) {
+          el.classList.add('active');
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          el.classList.remove('active');
+        }
+      });
+    }
+
+    // 時計の更新 (1秒ごと)
+    function updateClock() {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      clockEl.textContent = `${h}:${m}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 画面全体の更新
+    function updateDisplay() {
+      const remaining = totalSeconds - elapsedSeconds;
+      
+      // テキスト更新
+      timeLeftEl.textContent = formatTime(remaining);
+      timeElapsedEl.textContent = formatTime(elapsedSeconds);
+      
+      // アジェンダの更新
+      const elapsedMins = elapsedSeconds / 60;
+      updateAgendaHighlight(elapsedMins);
+
+      // プログレスバー更新 (0〜100%)
+      const progressPercent = Math.max(0, Math.min((elapsedSeconds / totalSeconds) * 100, 100));
+      progressBarEl.style.width = `${progressPercent}%`;
+
+      // 色の変更（警告・危険）
+      const remainingMinutes = remaining / 60;
+      
+      timeLeftEl.classList.remove('warning', 'danger');
+      progressBarEl.classList.remove('warning', 'danger');
+      
+      if (remainingMinutes <= DANGER_MINUTES) {
+        timeLeftEl.classList.add('danger');
+        progressBarEl.classList.add('danger');
+      } else if (remainingMinutes <= WARNING_MINUTES) {
+        timeLeftEl.classList.add('warning');
+        progressBarEl.classList.add('warning');
+      }
+    }
+
+    // タイマー処理
+    function toggleTimer() {
+      if (isRunning) {
+        clearInterval(timerInterval);
+        btnToggle.textContent = 'Start';
+      } else {
+        timerInterval = setInterval(() => {
+          elapsedSeconds++;
+          updateDisplay();
+        }, 1000);
+        btnToggle.textContent = 'Pause';
+      }
+      isRunning = !isRunning;
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      elapsedSeconds = 0;
+      currentAgendaIndex = 0;
+      btnToggle.textContent = 'Start';
+      updateDisplay();
+    }
+
+    // 次のアジェンダへ手動で進む
+    function nextAgenda() {
+      if (currentAgendaIndex < AGENDA.length - 1) {
+        currentAgendaIndex++;
+        // 即座にUIに反映
+        updateAgendaHighlight(elapsedSeconds / 60);
+      }
+    }
+
+    // イベントリスナー
+    btnToggle.addEventListener('click', toggleTimer);
+    btnNext.addEventListener('click', nextAgenda);
+    btnReset.addEventListener('click', resetTimer);
+
+    // スペースキー・矢印キーでの操作サポート
+    document.addEventListener('keydown', (e) => {
+      // ボタンなどにフォーカスが当たっていてもキー操作を優先
+      if (e.code === 'Space') {
+        e.preventDefault();
+        toggleTimer();
+      } else if (e.code === 'ArrowRight' || e.code === 'ArrowDown') {
+        // 右矢印か下矢印で次へ進む
+        e.preventDefault();
+        nextAgenda();
+      }
+    });
+
+    // 初期化
+    initAgenda();
+    updateDisplay();
+  </script>
+</body>
+</html>

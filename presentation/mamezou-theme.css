@@ -1,0 +1,227 @@
+/* @theme mamezou-theme */
+
+@import 'default';
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap');
+
+section {
+  background-color: #EDE1F8;
+  /* 少し濃い紫色（ライトパープル） */
+  font-family: 'BIZ UDPGothic', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 28pt;
+  /* 24pt以上を確保 */
+  line-height: 1.5;
+  color: #24292e;
+  /* Primer CSSの基本テキストカラー */
+  justify-content: center !important;
+  /* コンテンツを中央に寄せる */
+}
+
+/* タイトルスライド以外の見出し（h2）を上部に固定する */
+section:not(.title-slide) h2:first-of-type {
+  position: absolute;
+  top: 70px;
+  left: 70px;
+  right: 70px;
+  margin-top: 0;
+}
+
+/* 上部に固定した見出しの分、コンテンツ領域を下にずらす */
+section:not(.title-slide) {
+  padding-top: 150px !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: bold;
+  color: #4b2b82;
+  /* 背景色およびタイトルスライドの色とトーンを合わせたダークパープル */
+}
+
+/* ヘッダーのロゴ配置（通常スライド用） */
+header {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  left: auto;
+  /* Marpのデフォルト(左揃え)を上書き */
+  width: 150px;
+  height: 50px;
+  background-image: url('../images/mamezo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: right top;
+  /* 元が白色のロゴのため、通常スライドでは黒抜きにして表示する */
+  filter: brightness(0);
+  opacity: 0.8;
+}
+
+/* タイトルスライド（各章の表紙）用の特別なレイアウト */
+section.title-slide {
+  text-align: center;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  /* リッチな表紙らしさを出すダークパープル系のグラデーション */
+  background-color: #4b2b82;
+  background-image: linear-gradient(135deg, #2b1a4a 0%, #6e40c9 100%);
+  color: #ffffff;
+}
+
+/* タイトルスライドではページ番号を非表示にする */
+section.title-slide::after,
+section.title-slide[data-marpit-pagination]::after {
+  content: none !important;
+  display: none !important;
+}
+
+section.title-slide h1 {
+  font-size: 45pt;
+  color: #ffffff;
+  /* 白抜きに変更してコントラストを出す */
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  /* 少し影をつけてリッチに */
+}
+
+section.title-slide h2 {
+  font-size: 30pt;
+  color: #e1e4e8;
+  /* サブタイトルは少し落ち着いた白系（グレー） */
+  margin-top: 0;
+  font-weight: normal;
+  /* メインタイトルとの差をつける */
+}
+
+/* タイトルスライドのヘッダーロゴ（白抜き維持） */
+section.title-slide header {
+  /* 通常スライドの黒抜き設定を解除し、元の白のまま表示 */
+  filter: none;
+  opacity: 0.9;
+}
+
+/* 表紙スライド（背景画像使用）にはヘッダーロゴを表示しない */
+section.cover-slide header {
+  display: none;
+}
+
+/* Primer風のバッジやアラート用のスタイル */
+.Label {
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  font-size: inherit;
+  font-weight: bold;
+  line-height: inherit;
+  white-space: nowrap;
+  border: 2px solid #c89a0e;
+  border-radius: 2em;
+  background-color: #fff8e3;
+  color: #7a5500;
+  vertical-align: baseline;
+}
+
+/* small-list内のバッジはグリッド列を埋めて中央揃え */
+.small-list .Label {
+  display: block;
+  text-align: center;
+}
+
+/* 引用文や長い箇条書きなどを1行に収めるための縮小リスト用 */
+.small-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.small-list > ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.small-list li {
+  font-size: 20pt;
+  margin-bottom: 0.3em;
+}
+
+/* バッジ(.Label)を含むリスト項目のみgridレイアウトで整列 */
+.small-list li:has(.Label) {
+  display: grid;
+  grid-template-columns: 10em 1fr;
+  gap: 0.5em;
+  align-items: baseline;
+}
+
+/* 画像とテキストの2カラムレイアウト用 */
+.two-columns {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr;
+  gap: 40px;
+  align-items: center;
+}
+
+/* 画像の角丸表示用 */
+.rounded-image img {
+  border-radius: 12px;
+  max-width: 100%;
+}
+
+/* スライド下部などの中央寄せ画像用 */
+.center-image {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.center-image img {
+  width: 60%;
+  /* 画像サイズを縮小 */
+  max-height: 250px;
+  /* スライドから見切れないように制限 */
+  object-fit: contain;
+  border-radius: 8px;
+  /* 少しだけ角丸にする */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* 少し影をつけて見栄えを良くする */
+}
+
+/* 大きく表示するが見切れないように制限する画像用 */
+.large-image {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.large-image img {
+  width: 100%;
+  max-height: 450px;
+  /* スライド下部を見切れさせないための制限 */
+  object-fit: contain;
+}
+
+/* 強調用アイキャッチスライド（背景・アウトカムなど） */
+section.highlight-slide {
+  background-color: #ebdff7;
+  background-image: linear-gradient(135deg, #ebdff7 0%, #d4baf2 100%);
+  color: #24292e;
+}
+
+section.highlight-slide h1,
+section.highlight-slide h2,
+section.highlight-slide h3 {
+  color: #4b2b82;
+}
+
+/* メリハリのため、見出しの下に線を引く */
+section.highlight-slide h2 {
+  border-bottom: 2px solid rgba(75, 43, 130, 0.3);
+  padding-bottom: 0.3em;
+  margin-bottom: 1em;
+}
+
+/* 強調文字を赤色等にして目立たせる */
+section.highlight-slide strong {
+  color: #d73a49;
+}

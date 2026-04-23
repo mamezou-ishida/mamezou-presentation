@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Marp build output
+build/
+presentation/combined.md
+
+# Mermaid CLI temp
+puppeteer-config.json
+
+# Node
+node_modules/

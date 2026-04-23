@@ -1,0 +1,13 @@
+%% Marp プレゼンテーション ビルドパイプライン
+%% コマンドで生成する場合: npx -y @mermaid-js/mermaid-cli -i images/src/architecture.mmd -o images/architecture.png -b transparent -s 3
+flowchart LR
+    A[Markdown<br>+ CSS] -->|Git Push| B((GitHub))
+    B -->|GitHub Actions| C{Marp CLI}
+    C -->|HTML生成| D[GitHub Pages]
+    C -->|PDF生成| E[PDF配布]
+
+    style A fill:#ddf4ff,stroke:#0969da,color:#0969da
+    style B fill:#f6f8fa,stroke:#d0d7de
+    style C fill:#f6f8fa,stroke:#d0d7de
+    style D fill:#e6ffec,stroke:#2da44e,color:#2da44e
+    style E fill:#e6ffec,stroke:#2da44e,color:#2da44e

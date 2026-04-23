@@ -1,0 +1,97 @@
+name: Deploy Marp slide to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install Japanese fonts
+        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+
+      - name: Build HTML and PDF using Marp
+        run: |
+          npm install -g @marp-team/marp-cli
+
+          # Generate Mermaid diagrams (images/src/*.mmd が存在する場合のみ実行)
+          if ls images/src/*.mmd 1>/dev/null 2>&1; then
+            echo '{"args":["--no-sandbox"]}' > puppeteer-config.json
+            for mmd in images/src/*.mmd; do
+              base=$(basename "$mmd" .mmd)
+              npx -y @mermaid-js/mermaid-cli \
+                -i "$mmd" -o "images/${base}.png" \
+                -b transparent -s 3 -p puppeteer-config.json
+            done
+          fi
+
+          # Copy images to build dir
+          mkdir -p build/images
+          cp -r images/* build/images/ || true
+
+          # Combine numbered slide files into one for build
+          # 00_intro.md を先頭とし、それ以降の NN_*.md を結合
+          cat presentation/00_intro.md > presentation/combined.md
+          for f in $(ls presentation/[0-9][0-9]_*.md | grep -v 'presentation/00_' | sort); do
+            printf '\n' >> presentation/combined.md
+            echo "---" >> presentation/combined.md
+            # フロントマターを除去して結合
+            sed '1,/---/d' "$f" >> presentation/combined.md
+          done
+
+          # Build HTML
+          marp presentation/combined.md \
+            --theme presentation/mamezou-theme.css \
+            --html \
+            --allow-local-files \
+            -o build/index.html
+
+          # Fix image paths: ../images/ -> ./images/ for GitHub Pages
+          sed -i 's|\.\./images/|./images/|g' build/index.html
+
+          # カスタムキーボードショートカットをHTMLに追加する場合はここに記述
+          # 例:
+          # cat << 'EOF' >> build/index.html
+          # <script>
+          # document.addEventListener('keydown', function(e) {
+          #   if (e.key === '0') { window.location.hash = '#1'; }
+          # });
+          # </script>
+          # EOF
+
+          # Build PDF
+          marp presentation/combined.md \
+            --theme presentation/mamezou-theme.css \
+            --allow-local-files \
+            --pdf \
+            -o build/slide.pdf
+
+          # Copy timer app to build dir
+          cp -r timer build/ || true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./build
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

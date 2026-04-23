@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2b1a4a"/>
+      <stop offset="100%" style="stop-color:#6e40c9"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="rgba(0,0,0,0.3)"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="720" fill="url(#bg)"/>
+
+  <!-- Decorative accent lines -->
+  <rect x="0" y="0" width="8" height="720" fill="#8957e5" opacity="0.6"/>
+  <rect x="1272" y="0" width="8" height="720" fill="#8957e5" opacity="0.6"/>
+
+  <!-- Logo area (top right) -->
+  <image href="./mamezo.png" x="1090" y="28" width="160" height="54" opacity="0.9"/>
+
+  <!-- Main title -->
+  <text x="640" y="290"
+        font-family="'BIZ UDPGothic', 'Noto Sans JP', sans-serif"
+        font-size="68"
+        font-weight="bold"
+        fill="white"
+        text-anchor="middle"
+        filter="url(#shadow)">プレゼンテーションタイトル</text>
+
+  <!-- Subtitle -->
+  <text x="640" y="380"
+        font-family="'BIZ UDPGothic', 'Noto Sans JP', sans-serif"
+        font-size="34"
+        fill="#c9b8f0"
+        text-anchor="middle">サブタイトル（任意）</text>
+
+  <!-- Divider -->
+  <rect x="440" y="420" width="400" height="3" fill="#8957e5" rx="2" opacity="0.8"/>
+
+  <!-- Author / Event info -->
+  <text x="640" y="470"
+        font-family="'BIZ UDPGothic', 'Noto Sans JP', sans-serif"
+        font-size="26"
+        fill="#e1d5f8"
+        text-anchor="middle">発表者名｜YYYY年MM月　イベント名</text>
+
+  <!-- Bottom note -->
+  <text x="640" y="680"
+        font-family="'BIZ UDPGothic', 'Noto Sans JP', sans-serif"
+        font-size="18"
+        fill="#8957e5"
+        text-anchor="middle"
+        opacity="0.8">※ このファイル (images/title.svg) を差し替えて表紙をカスタマイズしてください</text>
+</svg>
