@@ -1,0 +1,113 @@
+name: Check speckit upstream updates
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # 毎週月曜 0:00 UTC (9:00 JST)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get upstream SHA
+        id: upstream
+        run: |
+          SHA=$(git ls-remote https://github.com/github/spec-kit HEAD | cut -f1)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "sha_short=${SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Compare with stored SHA
+        id: compare
+        run: |
+          STORED=$(cat .specify/upstream-sha.txt 2>/dev/null || echo "")
+          if [[ "$STORED" == "${{ steps.upstream.outputs.sha }}" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for existing open PR
+        if: steps.compare.outputs.changed == 'true'
+        id: existing_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COUNT=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --label "speckit-sync" \
+            --state open \
+            --json number \
+            --jq 'length')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Apply updates and create branch
+        if: steps.compare.outputs.changed == 'true' && steps.existing_pr.outputs.count == '0'
+        id: apply
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="chore/sync-speckit-${{ steps.upstream.outputs.sha_short }}"
+          git checkout -b "$BRANCH"
+
+          bash update-speckit.sh --apply --yes --no-color 2>&1 | tee /tmp/update-output.txt
+
+          git add .gemini/commands/ .specify/templates/ .specify/upstream-sha.txt
+          git diff --cached --quiet && echo "no_changes=true" >> "$GITHUB_OUTPUT" && exit 0
+
+          git commit -m "chore: sync speckit upstream (upstream:${{ steps.upstream.outputs.sha_short }})"
+          git push origin "$BRANCH"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "no_changes=false" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure label exists
+        if: >
+          steps.compare.outputs.changed == 'true' &&
+          steps.existing_pr.outputs.count == '0' &&
+          steps.apply.outputs.no_changes == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "speckit-sync" \
+            --repo "${{ github.repository }}" \
+            --color "0075ca" \
+            --description "speckit upstream sync PR" \
+            --force
+
+      - name: Create PR
+        if: >
+          steps.compare.outputs.changed == 'true' &&
+          steps.existing_pr.outputs.count == '0' &&
+          steps.apply.outputs.no_changes == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DIFF_SUMMARY=$(cat /tmp/update-output.txt)
+          BODY="## speckit upstream 更新
+
+upstream \`github/spec-kit\` に変更が検知されました。
+
+**upstream SHA**: \`${{ steps.upstream.outputs.sha }}\`
+
+### 差分サマリー
+
+\`\`\`
+${DIFF_SUMMARY}
+\`\`\`
+
+> ⚠️ 内容を確認してからマージしてください。
+> マージ後は次回のチェックで差分なしと判定されます。"
+
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --base main \
+            --head "${{ steps.apply.outputs.branch }}" \
+            --label "speckit-sync" \
+            --title "chore: sync speckit upstream (upstream:${{ steps.upstream.outputs.sha_short }})" \
+            --body "$BODY"

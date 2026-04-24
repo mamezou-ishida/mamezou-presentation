@@ -2,22 +2,37 @@
 # Compares local speckit commands/templates against upstream github/spec-kit.
 #
 # Usage:
-#   ./update-speckit.sh           — 差分を表示するだけ
-#   ./update-speckit.sh --apply   — 差分があるファイルを確認しながら適用
+#   ./update-speckit.sh              — 差分を表示するだけ
+#   ./update-speckit.sh --apply      — 差分があるファイルを確認しながら適用
+#   ./update-speckit.sh --apply --yes           — 全ファイルを自動適用（CI 用）
+#   ./update-speckit.sh --apply --yes --no-color — 色なし出力（CI ログ・PR 本文用）
 
 set -euo pipefail
 
 UPSTREAM_REPO="https://github.com/github/spec-kit"
 SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BOLD='\033[1m'
-RESET='\033[0m'
-
 APPLY=false
-[[ "${1:-}" == "--apply" ]] && APPLY=true
+AUTO_YES=false
+NO_COLOR=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --apply)    APPLY=true ;;
+        --yes)      AUTO_YES=true ;;
+        --no-color) NO_COLOR=true ;;
+    esac
+done
+
+if [[ "$NO_COLOR" == true ]]; then
+    RED='' GREEN='' YELLOW='' BOLD='' RESET=''
+else
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BOLD='\033[1m'
+    RESET='\033[0m'
+fi
 
 WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
@@ -28,6 +43,7 @@ git clone --depth 1 --filter=blob:none --sparse --quiet \
     "$UPSTREAM_REPO" "$WORKDIR/spec-kit"
 (cd "$WORKDIR/spec-kit" && git sparse-checkout set templates 2>/dev/null)
 UP="$WORKDIR/spec-kit/templates"
+UPSTREAM_SHA=$(git -C "$WORKDIR/spec-kit" rev-parse HEAD)
 echo ""
 
 # ── 集計用 ───────────────────────────────────────────────────────────────────
@@ -152,8 +168,14 @@ while [[ $i -lt ${#DIFF_LABELS[@]} ]]; do
     upstream_file="${DIFF_UPSTREAM[$i]}"
     mode="${DIFF_MODES[$i]}"
 
-    printf "  %s を更新しますか？ [y/N] " "$label"
-    read -r answer
+    if [[ "$AUTO_YES" == true ]]; then
+        answer=y
+        printf "  %s を更新します\n" "$label"
+    else
+        printf "  %s を更新しますか？ [y/N] " "$label"
+        read -r answer
+    fi
+
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then
         i=$((i + 1))
         continue
@@ -175,5 +197,8 @@ while [[ $i -lt ${#DIFF_LABELS[@]} ]]; do
     i=$((i + 1))
 done
 
+# ── upstream SHA を記録 ───────────────────────────────────────────────────────
+printf '%s\n' "$UPSTREAM_SHA" > "$SCRIPT_DIR/.specify/upstream-sha.txt"
+
 echo ""
-echo "完了。変更を確認してからコミットしてください。"
+echo "完了。.specify/upstream-sha.txt を更新しました。変更を確認してからコミットしてください。"
