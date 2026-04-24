@@ -12,10 +12,6 @@
   <!-- Background -->
   <rect width="1280" height="720" fill="url(#bg)"/>
 
-  <!-- Decorative accent lines -->
-  <rect x="0" y="0" width="8" height="720" fill="#8957e5" opacity="0.6"/>
-  <rect x="1272" y="0" width="8" height="720" fill="#8957e5" opacity="0.6"/>
-
   <!-- Logo area (top right) -->
   <image href="./mamezo.png" x="1090" y="28" width="160" height="54" opacity="0.9"/>
 
