@@ -353,6 +353,18 @@ npx -y @mermaid-js/mermaid-cli -i images/src/architecture.mmd -o images/architec
 
 スライドからは `![](../images/architecture.png)` で参照します。
 
+### speckit 更新の自動チェック
+
+`.github/workflows/check-speckit-updates.yml` は `github/spec-kit` upstream の変更を毎週検知し、差分を適用した PR を自動作成します。
+
+**デフォルトでは無効**です。有効にするには、リポジトリの **Settings** → **Variables** → **Actions** で以下を追加してください:
+
+| 変数名 | 値 |
+|---|---|
+| `SPECKIT_AUTO_CHECK` | `true` |
+
+> `workflow_dispatch` による手動実行は変数設定なしでも常に使えます。
+
 ---
 
 ## ディレクトリ構造

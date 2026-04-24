@@ -11,6 +11,9 @@ permissions:
 
 jobs:
   check:
+    # スケジュール実行はリポジトリ変数 SPECKIT_AUTO_CHECK=true のときのみ。
+    # 手動実行 (workflow_dispatch) は常に有効。
+    if: github.event_name == 'workflow_dispatch' || vars.SPECKIT_AUTO_CHECK == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -89,20 +92,22 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           DIFF_SUMMARY=$(cat /tmp/update-output.txt)
-          BODY="## speckit upstream 更新
-
-upstream \`github/spec-kit\` に変更が検知されました。
-
-**upstream SHA**: \`${{ steps.upstream.outputs.sha }}\`
-
-### 差分サマリー
-
-\`\`\`
-${DIFF_SUMMARY}
-\`\`\`
-
-> ⚠️ 内容を確認してからマージしてください。
-> マージ後は次回のチェックで差分なしと判定されます。"
+          {
+            echo "## speckit upstream 更新"
+            echo ""
+            echo "upstream \`github/spec-kit\` に変更が検知されました。"
+            echo ""
+            echo "**upstream SHA**: \`${{ steps.upstream.outputs.sha }}\`"
+            echo ""
+            echo "### 差分サマリー"
+            echo ""
+            echo '```'
+            echo "$DIFF_SUMMARY"
+            echo '```'
+            echo ""
+            echo "> ⚠️ 内容を確認してからマージしてください。"
+            echo "> マージ後は次回のチェックで差分なしと判定されます。"
+          } > /tmp/pr-body.md
 
           gh pr create \
             --repo "${{ github.repository }}" \
@@ -110,4 +115,4 @@ ${DIFF_SUMMARY}
             --head "${{ steps.apply.outputs.branch }}" \
             --label "speckit-sync" \
             --title "chore: sync speckit upstream (upstream:${{ steps.upstream.outputs.sha_short }})" \
-            --body "$BODY"
+            --body-file /tmp/pr-body.md
