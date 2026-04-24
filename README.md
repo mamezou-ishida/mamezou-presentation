@@ -402,6 +402,60 @@ npx -y @mermaid-js/mermaid-cli -i images/src/architecture.mmd -o images/architec
 
 ---
 
+## 社外の方向けカスタマイズガイド
+
+このテンプレートは豆蔵のブランド素材を使って作られています。自社・個人の発表に使う場合は以下の箇所を差し替えてください。
+
+### 1. ロゴ画像の差し替え
+
+`images/mamezo.png` を自社・自分のロゴ画像に差し替えます。
+
+- 推奨フォーマット: PNG（透明背景）
+- 目安サイズ: 横 300px 前後（テーマ CSS が `150px` 幅に縮小して表示）
+- ファイル名を変える場合は `presentation/mamezou-theme.css` 内のパスも変更:
+
+```css
+/* 変更前 */
+background-image: url('../images/mamezo.png');
+
+/* 変更後（例） */
+background-image: url('../images/your-logo.png');
+```
+
+### 2. テーマカラーの変更
+
+`presentation/mamezou-theme.css` 内の豆蔵ブランドカラーを自社カラーに置き換えます。
+
+| CSS の記述 | 現在の値 | 役割 |
+|---|---|---|
+| `background-color` (section) | `#EDE1F8` | スライド背景色（ライトパープル） |
+| `color` (h1〜h6) | `#4b2b82` | 見出し色（ダークパープル） |
+| `.title-slide` の `background-color` | `#2b1a4a` | 章扉スライドの背景色 |
+| `.highlight-slide` の `background-color` | `#4b2b82` | 強調スライドの背景色 |
+
+表紙グラデーションの色は `images/title.svg` 内の `<stop stop-color>` 属性で管理されています（詳細は「表紙画像のカスタマイズ」を参照）。
+
+### 3. テーマ名の変更（任意）
+
+テーマ名 `mamezou-theme` をそのまま使っても問題ありませんが、自社名に変えたい場合は **4箇所を同時に** 変更してください。
+
+| ファイル | 変更箇所 |
+|---|---|
+| `presentation/mamezou-theme.css` | ファイル名 自体 |
+| `presentation/mamezou-theme.css` 1行目 | `/* @theme mamezou-theme */` のテーマ名 |
+| `presentation/NN_*.md` 全ファイルのフロントマター | `theme: mamezou-theme` |
+| `.vscode/settings.json` | `"./presentation/mamezou-theme.css"` のパス |
+
+### 4. ライセンス表示の更新
+
+`LICENSE` ファイルの著作権者名を自分の情報に書き換えてください。
+
+```
+Copyright (c) 2026 <あなたの名前または組織名>
+```
+
+---
+
 ## GitHub テンプレートリポジトリの有効化（管理者向け）
 
 このリポジトリを他の社員が「Use this template」で使えるようにするには:
