@@ -373,6 +373,8 @@ npx -y @mermaid-js/mermaid-cli -i images/src/architecture.mmd -o images/architec
 
 > `workflow_dispatch` による手動実行は変数設定なしでも常に使えます。
 
+> **注意:** GitHub Actions が PR を自動作成するには、リポジトリの **Settings** → **Actions** → **General** → **Workflow permissions** で **「Allow GitHub Actions to create and approve pull requests」** を有効にしてください。この設定が無効の場合、PR 作成ステップでエラーになります。
+
 ---
 
 ## ディレクトリ構造
